@@ -3,7 +3,7 @@
   "version": "3.0.0",
   "author": "Ivan Surkov <panarama360@gmail.com>",
   "main": "build/index.js",
-  "typings": "build/types/src/index.d.ts",
+  "typings": "build/types/index.d.ts",
   "repository": "git@github.com:pamarama360/ts-telegraf-decorators",
   "scripts": {
     "build": "rimraf dist && tsc --project tsconfig.prod.json",
