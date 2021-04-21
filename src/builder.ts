@@ -1,9 +1,8 @@
-import { Composer, Telegraf } from 'telegraf';
+import { Composer, Telegraf, Context } from 'telegraf';
 import WizardScene from 'telegraf/scenes/wizard';
 import Stage from 'telegraf/stage';
 import Scene from 'telegraf/scenes/base';
 import session from 'telegraf/session';
-import { TelegrafContext } from 'telegraf/typings/context';
 
 import { getFromContainer } from './container';
 import { IBotOptions } from './interfaces/IBotOptions';
@@ -13,7 +12,7 @@ import { MetadataArgsStorage } from './MetadataStorage';
 import { WizardMetadata } from './metadata/WizardMetadata';
 import { ComposerMetadata } from './metadata/ComposerMetadata';
 
-interface ControllerOptions<TC extends TelegrafContext> {
+interface ControllerOptions<TC extends Context = Context> {
     bot: Telegraf<TC>;
     stage: Stage;
     controller: ComposerMetadata;
@@ -21,7 +20,7 @@ interface ControllerOptions<TC extends TelegrafContext> {
     middlewareInstances: TFIMiddleware<TC>[];
 }
 
-export function buildFromMetadata<TC extends TelegrafContext>(bot: Telegraf<TC>, options: IBotOptions): Telegraf<TC> {
+export function buildFromMetadata<TC extends Context = Context>(bot: Telegraf<TC>, options: IBotOptions): Telegraf<TC> {
     const stage = options.stage || new Stage();
 
     if (options.beforeMiddleware) {
@@ -70,7 +69,7 @@ export function buildFromMetadata<TC extends TelegrafContext>(bot: Telegraf<TC>,
     return bot;
 }
 
-function buildScene<TC extends TelegrafContext>(options: ControllerOptions<TC>) {
+function buildScene<TC extends Context>(options: ControllerOptions<TC>) {
     const { stage, controller: controllerScene, controllerInstance, middlewareInstances } = options;
 
     const scene = new Scene(controllerScene.options.data.scene);
@@ -93,7 +92,7 @@ function buildScene<TC extends TelegrafContext>(options: ControllerOptions<TC>) 
     stage.register(scene);
 }
 
-function buildController<TC extends TelegrafContext>(options: ControllerOptions<TC>) {
+function buildController<TC extends Context>(options: ControllerOptions<TC>) {
     const { bot, controller, controllerInstance, middlewareInstances } = options;
 
     const composer = new Composer();
@@ -117,7 +116,7 @@ function buildController<TC extends TelegrafContext>(options: ControllerOptions<
     bot.use(controller.options.data.compose ? controller.options.data.compose(composer) : composer);
 }
 
-function buildWizard<TC extends TelegrafContext>(options: ControllerOptions<TC>) {
+function buildWizard<TC extends Context>(options: ControllerOptions<TC>) {
     const { stage, controller: wizard, controllerInstance } = options;
 
     const group = MetadataArgsStorage.wizardStep
