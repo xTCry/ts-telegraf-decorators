@@ -1,5 +1,5 @@
-import {createParamDecorator} from "../src";
+import { createParamDecorator } from '../src';
 
-export const CurrentUser = createParamDecorator(ctx => {
+export const CurrentUser = createParamDecorator((ctx) => {
     return (ctx as any).user;
-})
+});

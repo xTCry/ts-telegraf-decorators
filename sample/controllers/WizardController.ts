@@ -1,49 +1,47 @@
-import {Command, Hears, Leave, TFContext, TFWizard, TFWizardStep} from "../../src";
+import { Command, Hears, Leave, TFContext, TFWizard, TFWizardStep } from '../../src';
 
 @TFWizard('steps')
 export class WizardController {
-
-
     @TFWizardStep(1)
-    hello(@TFContext() ctx) {
+    step1(@TFContext() ctx) {
         console.log('step 1');
         return ctx.wizard.next();
     }
 
     @TFWizardStep(2)
-    hello2(@TFContext() ctx) {
+    step2(@TFContext() ctx) {
         console.log('step 2');
         return ctx.wizard.next();
     }
 
     @TFWizardStep(3)
     @Hears('hello')
-    hello3(@TFContext() ctx) {
+    step3(@TFContext() ctx) {
         console.log('step 3');
         return ctx.wizard.next();
     }
 
     @TFWizardStep(3)
     @Command('test')
-    hello4(@TFContext() ctx) {
+    step4(@TFContext() ctx) {
         console.log('step 3');
         return ctx.wizard.next();
     }
 
     @TFWizardStep(3)
     @Command('hello')
-    hello5(@TFContext() ctx) {
-        console.log('step 3')
+    step5(@TFContext() ctx) {
+        console.log('step 3');
         return ctx.scene.leave();
     }
 
     @Command('exit')
-    exit(@TFContext() ctx) {
+    onExit(@TFContext() ctx) {
         return ctx.scene.leave();
     }
 
     @Leave()
-    leave(@TFContext() ctx) {
+    onLeave(@TFContext() ctx) {
         console.log('Leave');
     }
 }

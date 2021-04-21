@@ -1,17 +1,15 @@
-import {Service} from "typedi";
-import {TFIMiddleware} from "../../src/TFIMiddleware";
-import {Context, ContextMessageUpdate} from "telegraf";
+import { Service } from 'typedi';
+import { TFIMiddleware } from '../../src/TFIMiddleware';
 
 @Service()
 export class TestService {
-
-    async getBotName(): Promise<string>{
-        return 'My Bot'
+    async getBotName(): Promise<string> {
+        return 'My Bot';
     }
 }
 
-export class Aaaa implements TFIMiddleware{
-    async use(ctx: Context, next: (...args: any[]) => Promise<any>) {
+export class InteropMiddleware implements TFIMiddleware {
+    async use(ctx, next: (...args: any[]) => Promise<any>) {
         console.log('pre');
         await next();
         console.log('post');
