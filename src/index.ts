@@ -1,15 +1,16 @@
-import Telegraf from 'telegraf';
 import * as path from 'path';
+import Telegraf from 'telegraf';
+import * as glob from 'glob';
 import { buildFromMetadata } from './builder';
-import { IBotOptions } from './interfaces/IBotOptions';
 import { getContainer, useContainer } from './container';
-
-const glob = require('glob');
+import { IBotOptions } from './interfaces/IBotOptions';
 
 export function buildBot(options: IBotOptions) {
     if (options.container) useContainer(options.container);
     let bot = options.bot || new Telegraf(options.token);
+
     getContainer().set(Telegraf, bot);
+
     if (!(options.controllers as any[]).every((value) => value instanceof Function))
         (options.controllers as string[]).forEach((value) =>
             glob
