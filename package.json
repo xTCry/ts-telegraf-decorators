@@ -6,6 +6,7 @@
   "typings": "build/types/src/index.d.ts",
   "repository": "git@github.com:pamarama360/ts-telegraf-decorators",
   "scripts": {
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "test": "jest",
     "example": "ts-node sample/app.ts"
   },
