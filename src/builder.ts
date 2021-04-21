@@ -24,7 +24,13 @@ interface ControllerOptions<TC extends TelegrafContext> {
 export function buildFromMetadata<TC extends TelegrafContext>(bot: Telegraf<TC>, options: IBotOptions): Telegraf<TC> {
     const stage = options.stage || new Stage();
 
-    bot.use(options.session ? options.session : session());
+    if (options.beforeMiddleware) {
+        bot.use(options.beforeMiddleware);
+    }
+
+    if (options.session !== false) {
+        bot.use(options.session ? options.session : session());
+    }
 
     bot.use(stage.middleware());
 
@@ -56,6 +62,10 @@ export function buildFromMetadata<TC extends TelegrafContext>(bot: Telegraf<TC>,
                 break;
         }
     });
+
+    if (options.afterMiddleware) {
+        bot.use(options.afterMiddleware);
+    }
 
     return bot;
 }

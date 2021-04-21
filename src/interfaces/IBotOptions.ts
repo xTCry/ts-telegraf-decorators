@@ -1,10 +1,13 @@
+import { Middleware, Context } from 'telegraf';
 import { Container } from '../container';
 
 export interface IBotOptions {
     bot?: any;
-    container?: Container;
     token?: string;
-    session?: any;
+    container?: Container;
     controllers: Function[] | string[];
+    session?: any | false;
     stage?: any;
+    beforeMiddleware?: Middleware<Context>;
+    afterMiddleware?: Middleware<Context>;
 }
