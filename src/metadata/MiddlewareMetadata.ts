@@ -1,6 +1,5 @@
-
 export interface MiddlewareMetadata {
-    type: 'class' | 'method' ,
-    target: Function,
-    middleware: Function
+    type: 'class' | 'method';
+    target: Function;
+    middleware: Function;
 }

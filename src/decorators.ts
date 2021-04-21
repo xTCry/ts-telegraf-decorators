@@ -1,26 +1,26 @@
-import * as tt from "telegraf/typings/telegram-types";
-import {ParamsMetadata} from "./metadata/ParamsMetadata";
-import {ComposerMetadata, ComposerOptions} from "./metadata/ComposerMetadata";
-import {WizardStepMetadata} from "./metadata/WizardStepMetadata";
-import {Composer as Comp, Context, ContextMessageUpdate} from "telegraf";
-import {MetadataArgsStorage} from "./MetadataStorage";
-import {TFIMiddleware} from "./TFIMiddleware";
+import * as tt from 'telegraf/typings/telegram-types';
+import { ParamsMetadata } from './metadata/ParamsMetadata';
+import { ComposerMetadata, ComposerOptions } from './metadata/ComposerMetadata';
+import { WizardStepMetadata } from './metadata/WizardStepMetadata';
+import { Composer as Comp, Context, ContextMessageUpdate } from 'telegraf';
+import { MetadataArgsStorage } from './MetadataStorage';
+import { TFIMiddleware } from './TFIMiddleware';
 
-export function UseMiddleware(...middlewares: {new (...args: any[]): TFIMiddleware}[]): ClassDecorator {
-    return target => {
-        middlewares.forEach(value => {
-            MetadataArgsStorage.middlewareMetadata.push({middleware:value, target: target, type: "class"})
-        })
-    }
+export function UseMiddleware(...middlewares: { new (...args: any[]): TFIMiddleware }[]): ClassDecorator {
+    return (target) => {
+        middlewares.forEach((value) => {
+            MetadataArgsStorage.middlewareMetadata.push({ middleware: value, target: target, type: 'class' });
+        });
+    };
 }
 
 export function TFController(compose?: (composer: Comp<any>) => void): Function {
     return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
         Composer({
-            type: "controller",
+            type: 'controller',
             data: {
-                compose
-            }
+                compose,
+            },
         })(target, propertyKey, descriptor);
         return descriptor;
     };
@@ -28,12 +28,11 @@ export function TFController(compose?: (composer: Comp<any>) => void): Function 
 
 export function TFScene(scene: string): Function {
     return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-
         Composer({
-            type: "scene",
+            type: 'scene',
             data: {
-                scene
-            }
+                scene,
+            },
         })(target, propertyKey, descriptor);
         return descriptor;
     };
@@ -43,16 +42,16 @@ export function TFWizardStep(step: number): Function {
     return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
         MetadataArgsStorage.wizardStep.push(new WizardStepMetadata(target, propertyKey, step));
         return descriptor;
-    }
+    };
 }
 
 export function TFWizard(name?: string): Function {
     return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
         Composer({
-            type: "wizard",
+            type: 'wizard',
             data: {
-                name
-            }
+                name,
+            },
         })(target, propertyKey, descriptor);
         return descriptor;
     };
@@ -60,96 +59,89 @@ export function TFWizard(name?: string): Function {
 
 export function Composer(options: ComposerOptions): Function {
     return function (target: Function, propertyKey: string, descriptor: PropertyDescriptor) {
-        MetadataArgsStorage.composerMetadata.push(new ComposerMetadata(target, options))
+        MetadataArgsStorage.composerMetadata.push(new ComposerMetadata(target, options));
         return descriptor;
     };
 }
 
 export function Start(): Function {
-
     return function (target: Object, propertyKey: string, descriptor: PropertyDescriptor) {
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "start",
-            data: []
+            type: 'start',
+            data: [],
         });
         return descriptor;
-    }
+    };
 }
 
 export function Settings(): Function {
-
     return function (target: Object, propertyKey: string, descriptor: PropertyDescriptor) {
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "settings",
-            data: []
+            type: 'settings',
+            data: [],
         });
         return descriptor;
-    }
+    };
 }
 export function Entity(entity: string | string[] | RegExp | RegExp[] | Function): Function {
-
     return function (target: Object, propertyKey: string, descriptor: PropertyDescriptor) {
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "entity",
-            data: [entity]
+            type: 'entity',
+            data: [entity],
         });
         return descriptor;
-    }
+    };
 }
 
 export function Mention(username: string | string[]): Function {
-
     return function (target: Object, propertyKey: string, descriptor: PropertyDescriptor) {
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "mention",
-            data: [username]
+            type: 'mention',
+            data: [username],
         });
         return descriptor;
-    }
+    };
 }
 export function Phone(phone: string | string[]): Function {
-
     return function (target: Object, propertyKey: string, descriptor: PropertyDescriptor) {
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "phone",
-            data: [phone]
+            type: 'phone',
+            data: [phone],
         });
         return descriptor;
-    }
+    };
 }
 export function Hashtag(hashtag: string | string[]): Function {
-
     return function (target: Object, propertyKey: string, descriptor: PropertyDescriptor) {
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "hashtag",
-            data: [hashtag]
+            type: 'hashtag',
+            data: [hashtag],
         });
         return descriptor;
-    }
+    };
 }
 export function Cashtag(cashtag: string | string[]): Function {
-
     return function (target: Object, propertyKey: string, descriptor: PropertyDescriptor) {
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "cashtag",
-            data: [cashtag]
+            type: 'cashtag',
+            data: [cashtag],
         });
         return descriptor;
-    }
+    };
 }
 
 export function Help(): Function {
@@ -157,24 +149,23 @@ export function Help(): Function {
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "help",
-            data: []
+            type: 'help',
+            data: [],
         });
         return descriptor;
-    }
+    };
 }
 
 export function On(event: tt.UpdateType | tt.UpdateType[] | tt.MessageSubTypes | tt.MessageSubTypes[]): Function {
     return function (target: Object, propertyKey: string, descriptor: PropertyDescriptor) {
-
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "on",
-            data: [event]
+            type: 'on',
+            data: [event],
         });
         return descriptor;
-    }
+    };
 }
 
 export function Hears(match: string | RegExp): Function {
@@ -182,11 +173,11 @@ export function Hears(match: string | RegExp): Function {
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "hears",
-            data: [match]
+            type: 'hears',
+            data: [match],
         });
         return descriptor;
-    }
+    };
 }
 
 export function Command(command: string): Function {
@@ -194,11 +185,11 @@ export function Command(command: string): Function {
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "command",
-            data: [command]
+            type: 'command',
+            data: [command],
         });
         return descriptor;
-    }
+    };
 }
 
 export function Enter(): Function {
@@ -206,48 +197,45 @@ export function Enter(): Function {
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "enter",
-            data: []
+            type: 'enter',
+            data: [],
         });
         return descriptor;
-    }
+    };
 }
 
 export function Action(action: string | string[] | RegExp | RegExp[]): Function {
     return function (target: Object, propertyKey: string, descriptor: PropertyDescriptor) {
-
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "action",
-            data: [action]
+            type: 'action',
+            data: [action],
         });
         return descriptor;
-    }
+    };
 }
 export function InlineQuery(inlineQuery: string | string[] | RegExp | RegExp[]): Function {
     return function (target: Object, propertyKey: string, descriptor: PropertyDescriptor) {
-
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "inlineQuery",
-            data: [inlineQuery]
+            type: 'inlineQuery',
+            data: [inlineQuery],
         });
         return descriptor;
-    }
+    };
 }
 export function GameQuery(): Function {
     return function (target: Object, propertyKey: string, descriptor: PropertyDescriptor) {
-
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "gameQuery",
-            data: []
+            type: 'gameQuery',
+            data: [],
         });
         return descriptor;
-    }
+    };
 }
 
 export function Leave(): Function {
@@ -255,32 +243,31 @@ export function Leave(): Function {
         MetadataArgsStorage.handlers.push({
             propertyName: propertyKey,
             target,
-            type: "leave",
-            data: []
+            type: 'leave',
+            data: [],
         });
         return descriptor;
-    }
+    };
 }
 
-export const TFContext = createParamDecorator(ctx => {
+export const TFContext = createParamDecorator((ctx) => {
     return ctx;
 });
 
-export const TFTelegram = createParamDecorator(ctx => {
+export const TFTelegram = createParamDecorator((ctx) => {
     return ctx.telegram;
 });
 
-export const TFChat = createParamDecorator(ctx => {
-    return ctx.chat
+export const TFChat = createParamDecorator((ctx) => {
+    return ctx.chat;
 });
 
-export const TFMessage = createParamDecorator(ctx => {
-    return ctx.message
+export const TFMessage = createParamDecorator((ctx) => {
+    return ctx.message;
 });
 
-
-export function createParamDecorator(foo: (ctx: Context | ContextMessageUpdate)=>any){
+export function createParamDecorator(foo: (ctx: Context | ContextMessageUpdate) => any) {
     return () => (target: any, propertyKey: string, parameterIndex: number) => {
         MetadataArgsStorage.paramMetadata.push(new ParamsMetadata(target, propertyKey, parameterIndex, foo));
-    }
+    };
 }
