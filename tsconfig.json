@@ -1,16 +1,21 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es5",
-    "outDir": "build",
-    "lib": ["es2015"],
+    "module": "CommonJS",
+    "target": "ES2017",
+    "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "declaration": true,
-    "declarationDir": "build/types"
+    "rootDir": "./src",
+    "outDir": "./build",
+    "declarationDir": "./build/types",
+    "strict": true,
+    "esModuleInterop": true
   },
   "exclude": [
+    "build",
+    "sample",
     "node_modules",
-    "build"
+    "**/*.spec.ts",
+    "test/**"
   ]
 }
