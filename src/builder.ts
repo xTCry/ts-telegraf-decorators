@@ -1,4 +1,10 @@
-import { Composer } from 'telegraf';
+import { Composer, Telegraf } from 'telegraf';
+import WizardScene from 'telegraf/scenes/wizard';
+import Stage from 'telegraf/stage';
+import Scene from 'telegraf/scenes/base';
+import session from 'telegraf/session';
+import { TelegrafContext } from 'telegraf/typings/context';
+
 import { getFromContainer } from './container';
 import { IBotOptions } from './interfaces/IBotOptions';
 
@@ -7,12 +13,15 @@ import { MetadataArgsStorage } from './MetadataStorage';
 import { WizardMetadata } from './metadata/WizardMetadata';
 import { ComposerMetadata } from './metadata/ComposerMetadata';
 
-const WizardScene = require('telegraf/scenes/wizard');
-const Stage = require('telegraf/stage');
-const Scene = require('telegraf/scenes/base');
-const session = require('telegraf/session');
+interface ControllerOptions<TC extends TelegrafContext> {
+    bot: Telegraf<TC>;
+    stage: Stage;
+    controller: ComposerMetadata;
+    controllerInstance: any;
+    middlewareInstances: TFIMiddleware[];
+}
 
-export function buildFromMetadata(bot: any, options: IBotOptions): any {
+export function buildFromMetadata<TC extends TelegrafContext>(bot: Telegraf<TC>, options: IBotOptions): Telegraf<TC> {
     const stage = options.stage || new Stage();
 
     bot.use(options.session ? options.session : session());
@@ -24,29 +33,39 @@ export function buildFromMetadata(bot: any, options: IBotOptions): any {
         const middlewareInstances = MetadataArgsStorage.middlewareMetadata
             .filter((value) => value.target.prototype == controller.target.prototype)
             .map((value) => getFromContainer<TFIMiddleware>(value.middleware));
-        if (controller.options.type == 'controller')
-            buildController(bot, controller, controllerInstance, middlewareInstances);
-        else if (controller.options.type == 'scene')
-            buildScene(stage, controller, controllerInstance, middlewareInstances);
-        else if (controller.options.type == 'wizard')
-            buildWizard(bot, stage, controller, controllerInstance, middlewareInstances);
+
+        const controllerOptions: ControllerOptions<TC> = {
+            bot,
+            stage,
+            controller,
+            controllerInstance,
+            middlewareInstances,
+        };
+
+        switch (controller.options.type) {
+            case 'controller':
+                buildController(controllerOptions);
+                break;
+
+            case 'scene':
+                buildScene(controllerOptions);
+                break;
+
+            case 'wizard':
+                buildWizard(controllerOptions);
+                break;
+        }
     });
 
     return bot;
 }
 
-function buildScene(
-    stage: any,
-    controllerScene: ComposerMetadata,
-    controllerInstance: any,
-    middlewareInstances: TFIMiddleware[],
-) {
+function buildScene<TC extends TelegrafContext>(options: ControllerOptions<TC>) {
+    const { stage, controller: controllerScene, controllerInstance, middlewareInstances } = options;
+
     const scene = new Scene(controllerScene.options.data.scene);
-    scene.use(
-        ...middlewareInstances.map((value) => (ctx, next) => {
-            return value.use(ctx, next);
-        }),
-    );
+    scene.use(...middlewareInstances.map((value) => (ctx, next) => value.use(ctx, next)));
+
     MetadataArgsStorage.handlers
         .filter((value) => controllerScene.target.prototype == value.target)
         .forEach((handler) => {
@@ -64,18 +83,11 @@ function buildScene(
     stage.register(scene);
 }
 
-function buildController(
-    bot: any,
-    controller: ComposerMetadata,
-    controllerInstance: any,
-    middlewareInstances: TFIMiddleware[],
-) {
+function buildController<TC extends TelegrafContext>(options: ControllerOptions<TC>) {
+    const { bot, controller, controllerInstance, middlewareInstances } = options;
+
     const composer = new Composer();
-    (composer as any).use(
-        ...middlewareInstances.map((value) => (ctx, next) => {
-            return value.use(ctx, next);
-        }),
-    );
+    composer.use(...middlewareInstances.map((value) => (ctx, next) => value.use(ctx, next)));
     MetadataArgsStorage.handlers
         .filter(
             (value) => controller.target.prototype == value.target && value.type != 'enter' && value.type != 'leave',
@@ -95,23 +107,23 @@ function buildController(
     bot.use(controller.options.data.compose ? controller.options.data.compose(composer) : composer);
 }
 
-function buildWizard(
-    bot: any,
-    stage: any,
-    wizard: ComposerMetadata,
-    controllerInstance: any,
-    middlewareInstances: TFIMiddleware[],
-) {
+function buildWizard<TC extends TelegrafContext>(options: ControllerOptions<TC>) {
+    const { stage, controller: wizard, controllerInstance } = options;
+
     const group = MetadataArgsStorage.wizardStep
         .sort((a, b) => a.step - b.step)
-        .reduce(function (r, a) {
-            r[a.step] = r[a.step] || [];
-            r[a.step].push(a);
-            return r;
-        }, Object.create(null));
-    const steps = Object.values(group).map((stepsMetadata: WizardMetadata[], index) => {
+        .reduce<{ [key: number]: WizardMetadata[] }>(
+            (prev, cur) => ({
+                ...prev,
+                [cur.step]: [...(prev[cur.step] || []), cur],
+            }),
+            {},
+        );
+
+    const steps = Object.values(group).map((stepsMetadata) => {
         const composer = new Composer();
-        let method;
+        let method = null;
+
         stepsMetadata.forEach((stepMethod) => {
             const handlers = MetadataArgsStorage.handlers.filter(
                 (value) => value.target == wizard.target.prototype && value.propertyName == stepMethod.propertyName,
@@ -121,20 +133,18 @@ function buildWizard(
                     composer[handler.type](
                         ...[
                             ...handler.data,
-                            (ctx) => {
-                                return controllerInstance[handler.propertyName](
+                            (ctx) =>
+                                controllerInstance[handler.propertyName](
                                     ...getInjectParams(ctx, wizard.target, handler.propertyName),
-                                );
-                            },
+                                ),
                         ],
                     );
                 });
             } else {
-                method = (ctx) => {
-                    return controllerInstance[stepMethod.propertyName](
+                method = (ctx) =>
+                    controllerInstance[stepMethod.propertyName](
                         ...getInjectParams(ctx, wizard.target, stepMethod.propertyName),
                     );
-                };
             }
         });
         return method || composer;
@@ -150,14 +160,14 @@ function buildWizard(
         wizardInstance[handler.type](
             ...[
                 ...handler.data,
-                (ctx) => {
-                    return controllerInstance[handler.propertyName](
+                (ctx) =>
+                    controllerInstance[handler.propertyName](
                         ...getInjectParams(ctx, wizard.target, handler.propertyName),
-                    );
-                },
+                    ),
             ],
         );
     });
+
     stage.register(wizardInstance);
 }
 
@@ -165,7 +175,5 @@ function getInjectParams(ctx: any, target: Function, methodName: string): any[] 
     return MetadataArgsStorage.paramMetadata
         .filter((value) => value.target == target.prototype && methodName === value.propertyName)
         .sort((a, b) => a.index - b.index)
-        .map((value) => {
-            return value.foo(ctx);
-        });
+        .map((value) => value.foo(ctx));
 }
