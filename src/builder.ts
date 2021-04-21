@@ -18,7 +18,7 @@ interface ControllerOptions<TC extends TelegrafContext> {
     stage: Stage;
     controller: ComposerMetadata;
     controllerInstance: any;
-    middlewareInstances: TFIMiddleware[];
+    middlewareInstances: TFIMiddleware<TC>[];
 }
 
 export function buildFromMetadata<TC extends TelegrafContext>(bot: Telegraf<TC>, options: IBotOptions): Telegraf<TC> {
@@ -32,7 +32,7 @@ export function buildFromMetadata<TC extends TelegrafContext>(bot: Telegraf<TC>,
         const controllerInstance = getFromContainer(controller.target);
         const middlewareInstances = MetadataArgsStorage.middlewareMetadata
             .filter((value) => value.target.prototype == controller.target.prototype)
-            .map((value) => getFromContainer<TFIMiddleware>(value.middleware));
+            .map((value) => getFromContainer<TFIMiddleware<TC>>(value.middleware));
 
         const controllerOptions: ControllerOptions<TC> = {
             bot,

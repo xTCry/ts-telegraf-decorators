@@ -2,11 +2,13 @@ import * as tt from 'telegraf/typings/telegram-types';
 import { ParamsMetadata } from './metadata/ParamsMetadata';
 import { ComposerMetadata, ComposerOptions } from './metadata/ComposerMetadata';
 import { WizardStepMetadata } from './metadata/WizardStepMetadata';
-import { Composer as Comp, Context, ContextMessageUpdate } from 'telegraf';
+import { Composer as Comp, Context } from 'telegraf';
 import { MetadataArgsStorage } from './MetadataStorage';
 import { TFIMiddleware } from './TFIMiddleware';
 
-export function UseMiddleware(...middlewares: { new (...args: any[]): TFIMiddleware }[]): ClassDecorator {
+export function UseMiddleware<TC extends Context>(
+    ...middlewares: { new (...args: any[]): TFIMiddleware<TC> }[]
+): ClassDecorator {
     return (target) => {
         middlewares.forEach((value) => {
             MetadataArgsStorage.middlewareMetadata.push({ middleware: value, target: target, type: 'class' });
@@ -266,7 +268,7 @@ export const TFMessage = createParamDecorator((ctx) => {
     return ctx.message;
 });
 
-export function createParamDecorator(foo: (ctx: Context | ContextMessageUpdate) => any) {
+export function createParamDecorator<TC extends Context>(foo: (ctx: TC) => any) {
     return () => (target: any, propertyKey: string, parameterIndex: number) => {
         MetadataArgsStorage.paramMetadata.push(new ParamsMetadata(target, propertyKey, parameterIndex, foo));
     };
