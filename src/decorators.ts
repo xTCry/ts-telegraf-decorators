@@ -72,7 +72,7 @@ export function Start(): Function {
             propertyName: propertyKey,
             target,
             type: 'start',
-            data: [],
+            params: [],
         });
         return descriptor;
     };
@@ -84,7 +84,7 @@ export function Settings(): Function {
             propertyName: propertyKey,
             target,
             type: 'settings',
-            data: [],
+            params: [],
         });
         return descriptor;
     };
@@ -95,7 +95,7 @@ export function Entity(entity: string | string[] | RegExp | RegExp[] | Function)
             propertyName: propertyKey,
             target,
             type: 'entity',
-            data: [entity],
+            params: [entity],
         });
         return descriptor;
     };
@@ -107,7 +107,7 @@ export function Mention(username: string | string[]): Function {
             propertyName: propertyKey,
             target,
             type: 'mention',
-            data: [username],
+            params: [username],
         });
         return descriptor;
     };
@@ -118,7 +118,7 @@ export function Phone(phone: string | string[]): Function {
             propertyName: propertyKey,
             target,
             type: 'phone',
-            data: [phone],
+            params: [phone],
         });
         return descriptor;
     };
@@ -129,7 +129,7 @@ export function Hashtag(hashtag: string | string[]): Function {
             propertyName: propertyKey,
             target,
             type: 'hashtag',
-            data: [hashtag],
+            params: [hashtag],
         });
         return descriptor;
     };
@@ -140,7 +140,7 @@ export function Cashtag(cashtag: string | string[]): Function {
             propertyName: propertyKey,
             target,
             type: 'cashtag',
-            data: [cashtag],
+            params: [cashtag],
         });
         return descriptor;
     };
@@ -152,7 +152,7 @@ export function Help(): Function {
             propertyName: propertyKey,
             target,
             type: 'help',
-            data: [],
+            params: [],
         });
         return descriptor;
     };
@@ -164,7 +164,7 @@ export function On(event: tt.UpdateType | tt.UpdateType[] | tt.MessageSubTypes |
             propertyName: propertyKey,
             target,
             type: 'on',
-            data: [event],
+            params: [event],
         });
         return descriptor;
     };
@@ -176,7 +176,7 @@ export function Hears(match: string | RegExp): Function {
             propertyName: propertyKey,
             target,
             type: 'hears',
-            data: [match],
+            params: [match],
         });
         return descriptor;
     };
@@ -188,7 +188,7 @@ export function Command(command: string): Function {
             propertyName: propertyKey,
             target,
             type: 'command',
-            data: [command],
+            params: [command],
         });
         return descriptor;
     };
@@ -200,7 +200,7 @@ export function Enter(): Function {
             propertyName: propertyKey,
             target,
             type: 'enter',
-            data: [],
+            params: [],
         });
         return descriptor;
     };
@@ -212,7 +212,7 @@ export function Action(action: string | string[] | RegExp | RegExp[]): Function 
             propertyName: propertyKey,
             target,
             type: 'action',
-            data: [action],
+            params: [action],
         });
         return descriptor;
     };
@@ -223,7 +223,7 @@ export function InlineQuery(inlineQuery: string | string[] | RegExp | RegExp[]):
             propertyName: propertyKey,
             target,
             type: 'inlineQuery',
-            data: [inlineQuery],
+            params: [inlineQuery],
         });
         return descriptor;
     };
@@ -234,7 +234,7 @@ export function GameQuery(): Function {
             propertyName: propertyKey,
             target,
             type: 'gameQuery',
-            data: [],
+            params: [],
         });
         return descriptor;
     };
@@ -246,7 +246,7 @@ export function Leave(): Function {
             propertyName: propertyKey,
             target,
             type: 'leave',
-            data: [],
+            params: [],
         });
         return descriptor;
     };

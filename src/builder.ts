@@ -80,7 +80,8 @@ function buildScene<TC extends Context>(options: ControllerOptions<TC>) {
         .forEach((handler) => {
             scene[handler.type](
                 ...[
-                    ...handler.data,
+                    ...(handler.params ? handler.params : []),
+                    ...((handler.paramsInject && handler.paramsInject()) ?? []),
                     (ctx) => {
                         controllerInstance[handler.propertyName](
                             ...getInjectParams(ctx, controllerScene.target, handler.propertyName),
@@ -99,12 +100,13 @@ function buildController<TC extends Context>(options: ControllerOptions<TC>) {
     composer.use(...middlewareInstances.map((value) => (ctx, next) => value.use(ctx, next)));
     MetadataArgsStorage.handlers
         .filter(
-            (value) => controller.target.prototype == value.target && value.type != 'enter' && value.type != 'leave',
+            (handler) => controller.target.prototype == handler.target && handler.type != 'enter' && handler.type != 'leave',
         )
         .forEach((handler) => {
             composer[handler.type](
                 ...[
-                    ...handler.data,
+                    ...(handler.params ? handler.params : []),
+                    ...((handler.paramsInject && handler.paramsInject()) ?? []),
                     (ctx) => {
                         controllerInstance[handler.propertyName](
                             ...getInjectParams(ctx, controller.target, handler.propertyName),
@@ -135,13 +137,14 @@ function buildWizard<TC extends Context>(options: ControllerOptions<TC>) {
 
         stepsMetadata.forEach((stepMethod) => {
             const handlers = MetadataArgsStorage.handlers.filter(
-                (value) => value.target == wizard.target.prototype && value.propertyName == stepMethod.propertyName,
+                (handler) => handler.target == wizard.target.prototype && handler.propertyName == stepMethod.propertyName,
             );
             if (handlers.length) {
                 handlers.forEach((handler) => {
                     composer[handler.type](
                         ...[
-                            ...handler.data,
+                            ...(handler.params ? handler.params : []),
+                            ...((handler.paramsInject && handler.paramsInject()) ?? []),
                             (ctx) =>
                                 controllerInstance[handler.propertyName](
                                     ...getInjectParams(ctx, wizard.target, handler.propertyName),
@@ -161,14 +164,15 @@ function buildWizard<TC extends Context>(options: ControllerOptions<TC>) {
 
     const wizardInstance = new WizardScene(wizard.options.data.name, ...steps);
     const handlers = MetadataArgsStorage.handlers.filter(
-        (value) =>
-            wizard.target.prototype == value.target &&
-            !MetadataArgsStorage.wizardStep.find((value1) => value1.propertyName == value.propertyName),
+        (handler) =>
+            wizard.target.prototype == handler.target &&
+            !MetadataArgsStorage.wizardStep.find((step) => step.propertyName == handler.propertyName),
     );
     handlers.forEach((handler) => {
         wizardInstance[handler.type](
             ...[
-                ...handler.data,
+                ...(handler.params ? handler.params : []),
+                ...((handler.paramsInject && handler.paramsInject()) ?? []),
                 (ctx) =>
                     controllerInstance[handler.propertyName](
                         ...getInjectParams(ctx, wizard.target, handler.propertyName),

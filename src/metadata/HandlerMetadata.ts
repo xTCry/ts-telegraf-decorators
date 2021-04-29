@@ -2,5 +2,6 @@ export interface HandlerMetadata {
     type: string;
     target: Object;
     propertyName: string;
-    data: any;
+    params?: any[];
+    paramsInject?: (...args: any[]) => any[];
 }
