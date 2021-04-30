@@ -1,8 +1,11 @@
-import { ParamsMetadata } from './metadata/ParamsMetadata';
-import { ComposerMetadata } from './metadata/ComposerMetadata';
-import { WizardStepMetadata } from './metadata/WizardStepMetadata';
-import { HandlerMetadata } from './metadata/HandlerMetadata';
-import { MiddlewareMetadata } from './metadata/MiddlewareMetadata';
+import {
+    ParamsMetadata,
+    ComposerMetadata,
+    WizardStepMetadata,
+    HandlerMetadata,
+    MiddlewareMetadata,
+    ErrorCatcherMetadata,
+} from './metadata';
 
 class MetadataStorage {
     public handlers: HandlerMetadata[] = [];
@@ -15,12 +18,15 @@ class MetadataStorage {
 
     public middlewareMetadata: MiddlewareMetadata[] = [];
 
+    public errorCatcherMetadata: ErrorCatcherMetadata[] = [];
+
     public reset() {
         this.handlers = [];
         this.paramMetadata = [];
         this.composerMetadata = [];
         this.wizardStep = [];
         this.middlewareMetadata = [];
+        this.errorCatcherMetadata = [];
     }
 }
 

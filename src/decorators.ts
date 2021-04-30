@@ -5,6 +5,7 @@ import { WizardStepMetadata } from './metadata/WizardStepMetadata';
 import { Composer as Comp, Context } from 'telegraf';
 import { MetadataArgsStorage } from './MetadataStorage';
 import { TFIMiddleware } from './TFIMiddleware';
+import { ErrorCatcherMetadata } from './metadata/ErrorCatcherMetadata';
 
 export function UseMiddleware<TC extends Context>(
     ...middlewares: { new (...args: any[]): TFIMiddleware<TC> }[]
@@ -13,6 +14,12 @@ export function UseMiddleware<TC extends Context>(
         middlewares.forEach((value) => {
             MetadataArgsStorage.middlewareMetadata.push({ middleware: value, target: target, type: 'class' });
         });
+    };
+}
+
+export function UseErrorCatcher(handler: ErrorCatcherMetadata['handler']): ClassDecorator {
+    return (target) => {
+        MetadataArgsStorage.errorCatcherMetadata.push({ handler, target, type: 'class' });
     };
 }
 

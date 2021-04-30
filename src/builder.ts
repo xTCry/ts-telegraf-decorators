@@ -11,6 +11,7 @@ import { TFIMiddleware } from './TFIMiddleware';
 import { MetadataArgsStorage } from './MetadataStorage';
 import { WizardMetadata } from './metadata/WizardMetadata';
 import { ComposerMetadata } from './metadata/ComposerMetadata';
+import { ErrorCatcherMetadata } from './metadata/ErrorCatcherMetadata';
 
 interface ControllerOptions<TC extends Context = Context> {
     bot: Telegraf<TC>;
@@ -18,9 +19,19 @@ interface ControllerOptions<TC extends Context = Context> {
     controller: ComposerMetadata;
     controllerInstance: any;
     middlewareInstances: TFIMiddleware<TC>[];
+    errorCatcherInstance: TFIMiddleware<TC>;
 }
 
-export function buildFromMetadata<TC extends Context = Context>(bot: Telegraf<TC>, options: IBotOptions): Telegraf<TC> {
+const defaultErrorCatcher = new (class<TC extends Context = Context> {
+    async use(ctx: TC, fn: Function) {
+        await fn();
+    }
+})();
+
+export function buildFromMetadata<TC extends Context = Context>(
+    bot: Telegraf<TC>,
+    options: IBotOptions<TC>,
+): Telegraf<TC> {
     const stage = options.stage || new Stage();
 
     if (options.beforeMiddleware) {
@@ -34,10 +45,15 @@ export function buildFromMetadata<TC extends Context = Context>(bot: Telegraf<TC
     bot.use(stage.middleware());
 
     MetadataArgsStorage.composerMetadata.forEach((controller) => {
-        const controllerInstance = getFromContainer(controller.target);
+        const controllerInstance = getFromContainer<ComposerMetadata>(controller.target);
+
         const middlewareInstances = MetadataArgsStorage.middlewareMetadata
-            .filter((value) => value.target.prototype == controller.target.prototype)
+            .filter((value) => value.target.prototype == controller.target.prototype && value.type === 'class')
             .map((value) => getFromContainer<TFIMiddleware<TC>>(value.middleware));
+
+        const errorCatcherInstance = MetadataArgsStorage.errorCatcherMetadata
+            .filter((value) => value.target.prototype == controller.target.prototype && value.type === 'class')
+            .map((value) => getFromContainer<TFIMiddleware<TC>>(value.handler))[0];
 
         const controllerOptions: ControllerOptions<TC> = {
             bot,
@@ -45,6 +61,7 @@ export function buildFromMetadata<TC extends Context = Context>(bot: Telegraf<TC
             controller,
             controllerInstance,
             middlewareInstances,
+            errorCatcherInstance,
         };
 
         switch (controller.options.type) {
@@ -70,7 +87,13 @@ export function buildFromMetadata<TC extends Context = Context>(bot: Telegraf<TC
 }
 
 function buildScene<TC extends Context>(options: ControllerOptions<TC>) {
-    const { stage, controller: controllerScene, controllerInstance, middlewareInstances } = options;
+    const {
+        stage,
+        controller: controllerScene,
+        controllerInstance,
+        middlewareInstances,
+        errorCatcherInstance = defaultErrorCatcher,
+    } = options;
 
     const scene = new Scene(controllerScene.options.data.scene);
     scene.use(...middlewareInstances.map((value) => (ctx, next) => value.use(ctx, next)));
@@ -82,11 +105,12 @@ function buildScene<TC extends Context>(options: ControllerOptions<TC>) {
                 ...[
                     ...(handler.params ? handler.params : []),
                     ...((handler.paramsInject && handler.paramsInject()) ?? []),
-                    (ctx) => {
-                        controllerInstance[handler.propertyName](
-                            ...getInjectParams(ctx, controllerScene.target, handler.propertyName),
-                        );
-                    },
+                    (ctx: TC) =>
+                        errorCatcherInstance.use(ctx, () =>
+                            controllerInstance[handler.propertyName](
+                                ...getInjectParams(ctx, controllerScene.target, handler.propertyName),
+                            ),
+                        ),
                 ],
             );
         });
@@ -94,24 +118,32 @@ function buildScene<TC extends Context>(options: ControllerOptions<TC>) {
 }
 
 function buildController<TC extends Context>(options: ControllerOptions<TC>) {
-    const { bot, controller, controllerInstance, middlewareInstances } = options;
+    const {
+        bot,
+        controller,
+        controllerInstance,
+        middlewareInstances,
+        errorCatcherInstance = defaultErrorCatcher,
+    } = options;
 
     const composer = new Composer();
     composer.use(...middlewareInstances.map((value) => (ctx, next) => value.use(ctx, next)));
     MetadataArgsStorage.handlers
         .filter(
-            (handler) => controller.target.prototype == handler.target && handler.type != 'enter' && handler.type != 'leave',
+            (handler) =>
+                controller.target.prototype == handler.target && handler.type != 'enter' && handler.type != 'leave',
         )
         .forEach((handler) => {
             composer[handler.type](
                 ...[
                     ...(handler.params ? handler.params : []),
                     ...((handler.paramsInject && handler.paramsInject()) ?? []),
-                    (ctx) => {
-                        controllerInstance[handler.propertyName](
-                            ...getInjectParams(ctx, controller.target, handler.propertyName),
-                        );
-                    },
+                    (ctx: TC) =>
+                        errorCatcherInstance.use(ctx, () =>
+                            controllerInstance[handler.propertyName](
+                                ...getInjectParams(ctx, controller.target, handler.propertyName),
+                            ),
+                        ),
                 ],
             );
         });
@@ -119,7 +151,7 @@ function buildController<TC extends Context>(options: ControllerOptions<TC>) {
 }
 
 function buildWizard<TC extends Context>(options: ControllerOptions<TC>) {
-    const { stage, controller: wizard, controllerInstance } = options;
+    const { stage, controller: wizard, controllerInstance, errorCatcherInstance = defaultErrorCatcher } = options;
 
     const group = MetadataArgsStorage.wizardStep
         .sort((a, b) => a.step - b.step)
@@ -137,7 +169,8 @@ function buildWizard<TC extends Context>(options: ControllerOptions<TC>) {
 
         stepsMetadata.forEach((stepMethod) => {
             const handlers = MetadataArgsStorage.handlers.filter(
-                (handler) => handler.target == wizard.target.prototype && handler.propertyName == stepMethod.propertyName,
+                (handler) =>
+                    handler.target == wizard.target.prototype && handler.propertyName == stepMethod.propertyName,
             );
             if (handlers.length) {
                 handlers.forEach((handler) => {
@@ -145,17 +178,21 @@ function buildWizard<TC extends Context>(options: ControllerOptions<TC>) {
                         ...[
                             ...(handler.params ? handler.params : []),
                             ...((handler.paramsInject && handler.paramsInject()) ?? []),
-                            (ctx) =>
-                                controllerInstance[handler.propertyName](
-                                    ...getInjectParams(ctx, wizard.target, handler.propertyName),
+                            (ctx: TC) =>
+                                errorCatcherInstance.use(ctx, () =>
+                                    controllerInstance[handler.propertyName](
+                                        ...getInjectParams(ctx, wizard.target, handler.propertyName),
+                                    ),
                                 ),
                         ],
                     );
                 });
             } else {
-                method = (ctx) =>
-                    controllerInstance[stepMethod.propertyName](
-                        ...getInjectParams(ctx, wizard.target, stepMethod.propertyName),
+                method = (ctx: TC) =>
+                    errorCatcherInstance.use(ctx, () =>
+                        controllerInstance[stepMethod.propertyName](
+                            ...getInjectParams(ctx, wizard.target, stepMethod.propertyName),
+                        ),
                     );
             }
         });
@@ -173,9 +210,11 @@ function buildWizard<TC extends Context>(options: ControllerOptions<TC>) {
             ...[
                 ...(handler.params ? handler.params : []),
                 ...((handler.paramsInject && handler.paramsInject()) ?? []),
-                (ctx) =>
-                    controllerInstance[handler.propertyName](
-                        ...getInjectParams(ctx, wizard.target, handler.propertyName),
+                (ctx: TC) =>
+                    errorCatcherInstance.use(ctx, () =>
+                        controllerInstance[handler.propertyName](
+                            ...getInjectParams(ctx, wizard.target, handler.propertyName),
+                        ),
                     ),
             ],
         );

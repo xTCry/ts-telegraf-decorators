@@ -4,3 +4,4 @@ export * from './MiddlewareMetadata';
 export * from './ParamsMetadata';
 export * from './WizardMetadata';
 export * from './WizardStepMetadata';
+export * from './ErrorCatcherMetadata';
