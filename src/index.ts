@@ -10,7 +10,7 @@ export function buildBot<TC extends Context = Context>(options: IBotOptions<TC>)
         useContainer(options.container);
     }
 
-    let bot = options.bot || new Telegraf<TC>(options.token);
+    let bot = options.bot || new Telegraf<TC>(options.token!);
     getContainer().set(Telegraf, bot);
 
     (options.controllers as any[])

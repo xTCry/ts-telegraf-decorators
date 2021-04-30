@@ -275,6 +275,10 @@ export const TFMessage = createParamDecorator((ctx) => {
     return ctx.message;
 });
 
+export const TFWizardState = createParamDecorator((ctx: any) => {
+    return ctx.wizard.state;
+});
+
 export function createParamDecorator<TC extends Context>(foo: (ctx: TC) => any) {
     return () => (target: any, propertyKey: string, parameterIndex: number) => {
         MetadataArgsStorage.paramMetadata.push(new ParamsMetadata(target, propertyKey, parameterIndex, foo));

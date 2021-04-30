@@ -5,6 +5,7 @@ export interface ComposerOptions {
     data: any;
     middlewares?: { new (...args: any[]): TFIMiddleware }[];
 }
+
 export class ComposerMetadata {
     constructor(public target: Function, public options: ComposerOptions) {}
 }
